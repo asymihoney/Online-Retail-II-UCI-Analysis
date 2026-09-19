@@ -7,7 +7,7 @@ st.set_page_config(page_title="E-commerce Customer Analytics", layout="wide")
 @st.cache_data
 def load_data():
     country_monthly = pd.read_csv('country_monthly_summary.csv')
-    product_country = pd.read_csv('product_revenue_summary.csv')
+    product_country = pd.read_csv('product_country_summary.csv')
     rfm = pd.read_csv('customer_rfm_segments.csv')
     return country_monthly, product_country, rfm
 
