@@ -99,7 +99,7 @@ Using RFM (Recency, Frequency, Monetary) segmentation, customers were split into
 ## Run Locally
 
 ```bash
-git clone <https://github.com/asymihoney/Online-Retail-II-UCI-Analysis>
+git clone https://github.com/asymihoney/Online-Retail-II-UCI-Analysis
 cd online-retail-ii-uci-analysis
 pip install -r requirements.txt
 streamlit run app.py
