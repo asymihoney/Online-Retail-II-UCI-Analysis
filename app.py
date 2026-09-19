@@ -6,12 +6,12 @@ st.set_page_config(page_title="E-commerce Customer Analytics", layout="wide")
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('cleaned_transactions.csv', parse_dates=['InvoiceDate'])
+    country_monthly = pd.read_csv('country_monthly_summary.csv')
+    product_country = pd.read_csv('product_revenue_summary.csv')
     rfm = pd.read_csv('customer_rfm_segments.csv')
-    monthly = pd.read_csv('monthly_summary.csv')
-    return df, rfm, monthly
+    return country_monthly, product_country, rfm
 
-df, rfm, monthly = load_data()
+country_monthly, product_country, rfm = load_data()
 
 st.title("📊 E-commerce Sales & Customer Analytics")
 st.markdown("Analysis of UK online retailer transactions (2009–2011)")
@@ -21,7 +21,7 @@ st.sidebar.header("Filters")
 
 countries = st.sidebar.multiselect(
     "Country",
-    options=df['Country'].unique(),
+    options=country_monthly['Country'].unique(),
     default=['United Kingdom']
 )
 
@@ -31,22 +31,22 @@ segments = st.sidebar.multiselect(
     default=rfm['Segment'].unique()
 )
 
-df_filtered = df[df['Country'].isin(countries)]
+cm_filtered = country_monthly[country_monthly['Country'].isin(countries)]
+pc_filtered = product_country[product_country['Country'].isin(countries)]
 rfm_filtered = rfm[rfm['Segment'].isin(segments)]
 
 # KPI Row
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Total Revenue", f"£{df_filtered['TotalPrice'].sum():,.0f}")
-col2.metric("Total Orders", f"{df_filtered['Invoice'].nunique():,}")
-col3.metric("Unique Customers", f"{df_filtered['Customer ID'].nunique():,}")
-col4.metric("Avg Order Value", f"£{df_filtered.groupby('Invoice')['TotalPrice'].sum().mean():,.2f}")
+col1.metric("Total Revenue", f"£{cm_filtered['Revenue'].sum():,.0f}")
+col2.metric("Total Orders", f"{cm_filtered['Orders'].sum():,}")
+col3.metric("Unique Customers", f"{cm_filtered['Customers'].sum():,}")
+avg_order = cm_filtered['Revenue'].sum() / cm_filtered['Orders'].sum() if cm_filtered['Orders'].sum() > 0 else 0
+col4.metric("Avg Order Value", f"£{avg_order:,.2f}")
 
 # Monthly Revenue Chart
 st.subheader("Monthly Revenue Trend")
-monthly_filtered = df_filtered.groupby(df_filtered['InvoiceDate'].dt.to_period('M').astype(str))['TotalPrice'].sum().reset_index()
-monthly_filtered.columns = ['Month', 'Revenue']
-
-fig = px.line(monthly_filtered, x='Month', y='Revenue', markers=True)
+monthly_agg = cm_filtered.groupby('Month')['Revenue'].sum().reset_index()
+fig = px.line(monthly_agg, x='Month', y='Revenue', markers=True)
 st.plotly_chart(fig, use_container_width=True)
 
 # RFM Segment Visuals
@@ -62,8 +62,8 @@ with col2:
     seg_value = rfm_filtered.groupby('Segment')['Monetary'].sum().reset_index()
     fig2 = px.pie(seg_value, names='Segment', values='Monetary', title="Revenue Share by Segment")
     st.plotly_chart(fig2, use_container_width=True)
-    
+
 # Top Products Table
 st.subheader("Top 10 Products by Revenue")
-top_products = df_filtered.groupby('Description')['TotalPrice'].sum().nlargest(10).reset_index()
+top_products = pc_filtered.groupby('Description')['Revenue'].sum().nlargest(10).reset_index()
 st.dataframe(top_products, use_container_width=True)
