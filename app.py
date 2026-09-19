@@ -8,10 +8,11 @@ st.set_page_config(page_title="E-commerce Customer Analytics", layout="wide")
 def load_data():
     country_monthly = pd.read_csv('country_monthly_summary.csv')
     product_country = pd.read_csv('product_country_summary.csv')
+    country_customers = pd.read_csv('country_customers_summary.csv')
     rfm = pd.read_csv('customer_rfm_segments.csv')
-    return country_monthly, product_country, rfm
+    return country_monthly, product_country, country_customers, rfm
 
-country_monthly, product_country, rfm = load_data()
+country_monthly, product_country, country_customers, rfm = load_data()
 
 st.title("📊 E-commerce Sales & Customer Analytics")
 st.markdown("Analysis of UK online retailer transactions (2009–2011)")
@@ -34,12 +35,13 @@ segments = st.sidebar.multiselect(
 cm_filtered = country_monthly[country_monthly['Country'].isin(countries)]
 pc_filtered = product_country[product_country['Country'].isin(countries)]
 rfm_filtered = rfm[rfm['Segment'].isin(segments)]
+cc_filtered = country_customers[country_customers['Country'].isin(countries)]
 
 # KPI Row
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Total Revenue", f"£{cm_filtered['Revenue'].sum():,.0f}")
 col2.metric("Total Orders", f"{cm_filtered['Orders'].sum():,}")
-col3.metric("Unique Customers", f"{cm_filtered['Customers'].sum():,}")
+col3.metric("Unique Customers", f"{cc_filtered['UniqueCustomers'].sum():,}")
 avg_order = cm_filtered['Revenue'].sum() / cm_filtered['Orders'].sum() if cm_filtered['Orders'].sum() > 0 else 0
 col4.metric("Avg Order Value", f"£{avg_order:,.2f}")
 
